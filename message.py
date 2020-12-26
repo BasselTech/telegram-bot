@@ -22,6 +22,18 @@ class Message:
             'text': self.value,
         }
         method_name = 'sendMessage'
+        if self.value == 'sample-pdf':
+            return self._send_local_file('files/sample.pdf')
+        return method_name, response
+
+    def _send_local_file(self, file_path):
+        f = open(file_path, 'rb')
+        file_bytes = f.read()
+        f.close()
+        response = {
+            'document': (f.name, file_bytes)
+        }
+        method_name = 'sendDocument'
         return method_name, response
 
     def _get_file(self):

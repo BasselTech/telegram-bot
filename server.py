@@ -22,7 +22,12 @@ def main(*args, **kwargs):
     return "OK"
 
 def send_response(method_name, params):
-    r = requests.post(url=API_URL.format(method_name=method_name), params=params)
+    if method_name == 'sendDocument':
+        document = params['document']
+        del params['document']
+        r = requests.post(url=API_URL.format(method_name=method_name), params=params, files={'document': document})
+    else:
+        r = requests.post(url=API_URL.format(method_name=method_name), params=params)
     return r.status_code == 200
 
 @app.route('/.well-known/acme-challenge/<challenge>')
