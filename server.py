@@ -1,14 +1,29 @@
-from flask import Flask
+from flask import Flask, request
+import requests
+import time
+
+from message import Message
 
 PORT = 8080
 CERT_PATH = '/home/bassel/telegram_bot/ssl/fullchain.pem'
 KEY_PATH = '/home/bassel/telegram_bot/ssl/privkey.pem'
 
+TELEGRAM_TOKEN = '1427190815:AAEV4kyzuxGz4r4-Z1ql3V76mTuEbhQ9qeI'
+API_URL = f'https://api.telegram.org/bot{TELEGRAM_TOKEN}' + '/{method_name}'
+
 app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def main(*args, **kwargs):
-    return "Welcome to our server!"
+    message = Message(request.json['message'])
+    method_name, params = message.get_response()
+    while not send_response(method_name, params):
+        time.sleep(5)
+    return "OK"
+
+def send_response(method_name, params):
+    r = requests.post(url=API_URL.format(method_name=method_name), params=params)
+    return r.status_code == 200
 
 @app.route('/.well-known/acme-challenge/<challenge>')
 def verify_challenge(challenge):
