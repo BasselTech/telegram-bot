@@ -15,7 +15,7 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET', 'POST'])
 def main(*args, **kwargs):
-    message = Message(request.json['message'])
+    message = Message(request.json['message'], TELEGRAM_TOKEN)
     method_name, params = message.get_response()
     while not send_response(method_name, params):
         time.sleep(5)
