@@ -27,7 +27,8 @@ class Message:
     def _get_file(self):
         get_file_api_url = f'https://api.telegram.org/bot{self.TELEGRAM_TOKEN}/getFile'
         get_file_content_api_url = f'https://api.telegram.org/file/bot{self.TELEGRAM_TOKEN}/' + '{file_path}'
-        response = requests.post(url=get_file_api_url, params={'file_id': self.value['file_id']})
+        file_id = self.value['file_id'] if self.type != 'photo' else self.value[0]['file_id']
+        response = requests.post(url=get_file_api_url, params={'file_id': file_id})
         json_response = json.loads(response.content)
         if response.status_code != 200 or not json_response.get('ok'):
             raise FileNotFoundError()
@@ -72,6 +73,28 @@ class Message:
         except FileNotFoundError:
             response = {
                 'text': 'Could not get your voice message!'
+            }
+        method_name = 'sendMessage'
+        return method_name, response
+
+    def _get_qr_code_text(self, file_content):
+        API_URL = 'http://api.qrserver.com/v1/read-qr-code/'
+        response = requests.post(url=API_URL, files={'file': file_content})
+        json_response = json.loads(response.content)
+        if response.status_code != 200:
+            return 'Could not parse your QR Code photo!'
+        return json_response[0]['symbol'][0]['data'] or 'Could not parse your QR Code photo!'
+
+    def _photo_get_response(self):
+        try:
+            file_content = self._get_file()
+            qr_code_text = self._get_qr_code_text(file_content)
+            response = {
+                'text': qr_code_text,
+            }
+        except FileNotFoundError:
+            response = {
+                'text': 'Could not get your photo!'
             }
         method_name = 'sendMessage'
         return method_name, response
