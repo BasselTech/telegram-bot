@@ -3,7 +3,7 @@ import json
 
 
 class Message:
-    supported_types = ['text', 'audio', 'document', 'photo']
+    supported_types = ['text', 'audio', 'document', 'photo', 'voice']
 
     def __init__(self, message, TELEGRAM_TOKEN):
         self.chat_id = message['from']['id']
@@ -47,6 +47,31 @@ class Message:
         except FileNotFoundError:
             response = {
                 'text': 'Could not download your file!'
+            }
+        method_name = 'sendMessage'
+        return method_name, response
+
+    def _get_voice_transcript(self, file_content):
+        IBM_API_URL = 'https://gateway-lon.watsonplatform.net/speech-to-text/api/v1/recognize'
+        response = requests.post(url=IBM_API_URL,
+                                 data=file_content,
+                                 headers={'Content-Type': self.value['mime_type']},
+                                 auth=('apikey', 'Cww1jJ0JImdXXuJDDNV1eg6wA1SsQsNNO7Nl0zNHRj3n'))
+        json_response = json.loads(response.content)
+        if response.status_code != 200 or not json_response.get('results'):
+            return 'Could not hear you well!'
+        return json_response['results'][0]['alternatives'][0]['transcript']
+
+    def _voice_get_response(self):
+        try:
+            file_content = self._get_file()
+            voice_transcript = self._get_voice_transcript(file_content)
+            response = {
+                'text': voice_transcript,
+            }
+        except FileNotFoundError:
+            response = {
+                'text': 'Could not get your voice message!'
             }
         method_name = 'sendMessage'
         return method_name, response
